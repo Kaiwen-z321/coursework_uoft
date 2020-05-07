@@ -1,0 +1,86 @@
+---
+title: "STA305 Project Report"
+author: "Kaiwen Zou"
+date: "2019/12/5"
+output: pdf_document
+---
+
+# Description
+Ever since smartphones have become popular, people seem to be spending more time in washrooms on their phones than before, and we all know that sitting for too long on the toilet is unhealthy. Therefore, in this study, I am going to investigate what are the effects of these following factors on time spend in washrooms:
+
+1. Have I brought a smartphone?
+2. Am I using a public washroom or your bathroom at home?
+3. Did I use the squatting position?
+
+I chose these three factors since I believe they are significant factors that affect our time spent in the washroom. A detailed explanation can be found in the video. I hope to find a healthier and more efficient way to 'poop' and to alarm people not to stay too long in the washroom, by examining the main effects and the interaction effects of these factors and their confidence intervals.
+
+I will denote these three factors as *smartphone*, *home* and *squat*, respectively, for simplicity throughout this report. Since we have three factors with two levels each (either True or False), so it is perfect to use a $3^2$ factorial design. Specific levels of each factor can be found in the second part of this report. 
+
+I started recording my time spent (in minutes) in washrooms at the beginning of November. Before each time I entered the washroom, I tossed a coin twice to determine my position and whether I will bring my smartphone to randomize the squat and smartphone factors. The factor $home$ is already random since I can be anywhere when I feel like 'pooping'. I tried 2 replications for each level of the three factors, and it ended up with 16 measurements in total. 
+
+The measurements are shown below:
+```{r echo=FALSE}
+mydata <- read.csv("D:/2019F/STA305/exp.csv",header = TRUE)
+attach(mydata)
+knitr::kable(mydata,col.names = c('Trial','Time Spent (in minutes)','smartphone','home','squat'), align = 'c', caption = 'Measurements from Washroom Experiment')
+```
+
+\pagebreak
+# Analysis
+  In this analysis, I used the following linear model:\newline
+$y_i=\beta_0+\beta_1*smartphone_i+\beta_2*home_i+\beta_3*squat_i+\beta_4*smartphone_i*home_i+\beta_4*smartphone_i*squat_i+\beta_5*smartphone_i*home_i+\beta_6*home_i*squat_i+\beta_7*smartphone_i*home_i*squat_i$, where:  
+
+- $y_i$ is the time spent in the $i^{th}$ trial;
+- $smartphone_i:\\\{=1~if~I~brought~my~smartphone~with~me~in~the~i^{th}~trial;\\~=-1~if~I~did~not~bring~it\}$
+- $home:\\\{=1~if~I~used~my~bathroom~at~home~in~the~i^{th}~trial;\\~=-1~if~I~used~a~public~washroom\}$
+- $squat:\\\{=1~if~I~used~the~squatting~position~in~the~i^{th}~trial;\\~=-1~if~I~used~the~normal~position\}$
+- The variables such as $smartphone_i*squat_i$ represent the interaction between two factors.
+
+The estimated parameters are shown below:
+```{r echo=FALSE}
+m1 <- lm(Time~smartphone*home*squat, data = mydata)
+knitr::kable(summary(m1)$coefficients, digits = 3, 
+             col.names = c('Estimate','Std. Error','t-value','p-value'),
+             align = 'c', caption = 'Estimated Parameters')
+```
+
+By examining the output, we can find the p-values of *smartphone*, *home* and the interaction between *smartphone* and *home* are less than 0.05. The p-value of *smartphone* < 0.05 means we can reject the null hypothesis $(H_0:\beta_{smartphone}=0~H_1:\beta_{smartphone}\neq0)$ which implies *smartphone* has a statistically significant effect. Similarly, *home* and the interaction between *smartphone* and *home* are also statistically significant. Since this is the least-square estimates, we need to double the coefficients to obtain the factorial estimates (only significant factors/contribution included):
+```{r echo=FALSE}
+sumTable <-summary(m1)$coefficients
+knitr::kable(2*sumTable[c(1,2,3,5),c(1,2)], digits = 3, 
+             col.names = c('Estimate','Std. Error'),
+             align = 'c', caption = 'Factorial Estimates')
+```
+
+In the end, we obtained the main effects of *smartphone* and *home* are 8.5 and 3.5, respectively; the interaction effect between them is 3.5. This implies that bringing a smartphone can increase your time spent in the washroom by an average of 8.5 minutes; using your home bathroom can increase your time spent by an average of 3.5 minutes. The interaction effect between *smartphone* and *home* is the difference in time spent between mean difference of time spent between $home=1$ and $home=-1$ when bringing a smartphone; and mean difference of time spent between $home=1$ and $home=-1$ when not bringing a smartphone. In our case, the interaction effect is 3.5 minutes. 
+  
+The following is a cube plot. The numbers at the corners represent average times with different factors. For example, when $home=smartphone=squat=1$, the average time spent in the washroom was 15.5 minutes.
+```{r echo=FALSE, fig.align='center', message=FALSE, warning=FALSE,out.width='30%'}
+library('FrF2')
+cubePlot(m1,'smartphone','home','squat',main = 'Cube Plot of Time Spent in the Washroom')
+```
+
+According to the following table, we found confidence intervals for *smartphone*, *home* and the interaction between them do not include zero, meaning they are statistically significant. The other factors' confidence intervals include zero which means they are not statistically significant.
+```{r echo=FALSE}
+knitr::kable(2*confint.lm(m1), digits = 3, align = 'c',
+             caption = "95% Confidence Interval of True Values of Effects")
+```
+
+Based on the following interaction plots, we confirmed the lines of *home* and *smartphone* intersect with each other which means they have an interaction effect. The other two plots did not show obvious crossing lines, therefore, interaction effect does not exist between *squat* and *smartphone* or between *home* and *squat*:
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+par(mfrow=c(2,2),cex=0.5)
+p1 <- interaction.plot(smartphone,home,Time,xlab = 'Smartphone',ylab = 'Time Spent',type = 'l')
+p2 <- interaction.plot(smartphone,squat,Time,xlab = 'Smartphone', trace.label = 'Squat',ylab = 'Time Spent')
+p3 <- interaction.plot(squat,home,Time,xlab = 'Squat', trace.label = 'Home',ylab = 'Time Spent')
+```
+
+
+\newpage
+# Conclusion
+  Based on all of the above statistical results, we concluded that bringing a smartphone, using a home bathroom and the combination of both can significantly increase people's time spent in the washroom since we obtained small p-values which made these factors statistically significant. Specifically, bringing your smartphone will cost you an average of 8.5 minutes more minutes in the washroom; using a home bathroom will make you spend 3.5 more minutes on average and the mixture of both can increase an average of 3.5 more minutes. There is no siginificant interaction effect between *home* and *squat* or between *smartphone* and *squat*; using a squat position will not significantly affect your time spent in the washroom.  
+  
+  To make sense of this result, I think having a smartphone can definitely make you 'poop' slower since you can check messages and social medias through your device. As for using a home bathroom, it may be the case that it is more comfortable to use a private toliet so people can take their time slowly. Also, combining both of these will absolutely cost you more time.  
+  
+  However, one drawback of my experiment may be that my time spent in the washroom can be affected by my physical condition, but this is difficult to control. Also, I may expect to spend more time when I have my smartphone and I would intentionally make myself faster, so I tried to convince myself that I am not in an experiment.  
+  
+  In the end, I encourage everyone to give up your smartphone while 'pooping' and try not to stay too long on the toliet although you may be enjoying yourself in the comfortable environment. 
